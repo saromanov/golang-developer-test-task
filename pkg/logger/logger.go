@@ -30,3 +30,7 @@ func (l *Logger) Fatalf(format string, data ...interface{}) {
 func (l *Logger) Infof(format string, data ...interface{}) {
 	l.log.Infof(format, data...)
 }
+
+func (l *Logger) Errorf(format string, data ...interface{}) {
+	l.log.Errorf(format, data...)
+}

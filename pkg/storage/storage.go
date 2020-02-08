@@ -10,7 +10,7 @@ type Storage interface {
 
 // FindConfig provides definition of the findign data
 type FindConfig struct {
-	GlobalID int
-	ID       int
+	GlobalID int64
+	ID       int64
 	ModeID   string
 }
