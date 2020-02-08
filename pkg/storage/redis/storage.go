@@ -17,12 +17,14 @@ type Redis struct {
 }
 
 // New provides initialization of the redis client
-func New(c *config.Config) (storage.Storage, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     c.StorageAddress,
-		Password: c.StoragePassword,
-		DB:       0,
-	})
+func New(c *config.Config, client *redis.Client) (storage.Storage, error) {
+	if client == nil {
+		client = redis.NewClient(&redis.Options{
+			Addr:     c.StorageAddress,
+			Password: c.StoragePassword,
+			DB:       0,
+		})
+	}
 
 	_, err := client.Ping().Result()
 	if err != nil {
@@ -36,33 +38,32 @@ func New(c *config.Config) (storage.Storage, error) {
 }
 
 // Insert provides inserting of list of the data
-func (r *Redis) Insert(data []models.Parking) error {
+func (r *Redis) Insert(data []models.Parking) (int, error) {
 	if len(data) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	modes := make(map[string][]interface{})
-
 	for _, d := range data {
 		if d.ID == 0 {
-			return errNoID
+			return 0, errNoID
 		}
 		key := fmt.Sprintf("id_%d", d.ID)
 		result, err := json.Marshal(d)
 		if err != nil {
-			return fmt.Errorf("unable to marshal data: %v", err)
+			return 0, fmt.Errorf("unable to marshal data: %v", err)
 		}
 		err = r.client.Do("SET", key, string(result)).Err()
 		if err != nil {
-			return fmt.Errorf("unable to set data: %v", err)
+			return 0, fmt.Errorf("unable to set data: %v", err)
 		}
 		if err := createIndex(r.client, fmt.Sprintf("global_id_%d", d.GlobalID), key); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
+			return 0, errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
 		}
 		modes[d.Mode] = append(modes[d.Mode], d.ID)
 	}
 
-	return createOneToMany(r.client, "mode", modes)
+	return len(data), createOneToMany(r.client, "mode", modes)
 }
 
 // Find provides searhing of the data

@@ -4,7 +4,7 @@ import "github.com/saromanov/golang-developer-test-task/pkg/models"
 
 // Storage defines main interface for storage
 type Storage interface {
-	Insert([]models.Parking) error
+	Insert([]models.Parking) (int, error)
 	Find(*FindConfig) ([]models.Parking, error)
 }
 
