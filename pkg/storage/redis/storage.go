@@ -39,13 +39,10 @@ func (r *Redis) Insert(data []models.Parking) error {
 		return nil
 	}
 
-	indexes := [2]string{"mode_id_%d", "global_id_%d"}
 	for _, d := range data {
 		if d.ID == 0 {
 			return errNoID
 		}
-		d.Name = ""
-		d.Mode = ""
 		key := fmt.Sprintf("id_%d", d.ID)
 		result, err := json.Marshal(d)
 		if err != nil {
@@ -55,11 +52,11 @@ func (r *Redis) Insert(data []models.Parking) error {
 		if err != nil {
 			return fmt.Errorf("unable to set data: %v", err)
 		}
-
-		for _, idx := range indexes {
-			if err := createIndex(r.client, idx, key); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
-			}
+		if err := createIndex(r.client, fmt.Sprintf("global_id_%d", d.GlobalID), key); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
+		}
+		if err := createIndex(r.client, fmt.Sprintf("mode_id_%s", d.Mode), key); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
 		}
 	}
 	return nil
@@ -80,7 +77,16 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 			return nil, errors.Wrap(err, "unable to find by the key")
 		}
 	}
-	return nil, nil
+
+	if req.ID != 0 {
+		key = fmt.Sprintf("%d", req.ID)
+	}
+	fmt.Println("KEY: ", key)
+	obj, err := getObject(r.client, key)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get object")
+	}
+	return []models.Parking{*obj}, nil
 }
 
 // findByKeys provides searching by additional indexes
@@ -89,7 +95,7 @@ func findByKeys(key string) (string, error) {
 }
 
 func getObject(conn *redis.Client, key string) (*models.Parking, error) {
-	objStr, err := redis.String(conn.Do("GET", key))
+	objStr, err := conn.Do("GET", fmt.Sprintf("id_%s", key)).String()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to find by the key")
 	}
@@ -105,6 +111,7 @@ func getObject(conn *redis.Client, key string) (*models.Parking, error) {
 
 // createIndex provides creating of the index for searching data
 func createIndex(client *redis.Client, index, parentID string) error {
+	fmt.Println("ID: ", index)
 	if err := client.HSet(index, "field", parentID).Err(); err != nil {
 		return fmt.Errorf("unable to create index: %v", err)
 	}

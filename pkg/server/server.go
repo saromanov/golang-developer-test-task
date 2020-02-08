@@ -22,6 +22,10 @@ type Server struct {
 
 // search provides searching by the data
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
 	totalRequests.Inc()
 	data, err := s.store.Find(s.prepareSearchRequest(r))
 	if err != nil {
@@ -44,13 +48,14 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 func (s *Server) prepareSearchRequest(r *http.Request) *storage.FindConfig {
 	response := &storage.FindConfig{}
 	globalID, ok := r.URL.Query()["global_id"]
-	if ok && len(globalID[0]) < 1 {
+	if ok && len(globalID[0]) > 1 {
 		response.GlobalID = s.mustParseInt(globalID[0])
 	}
 	id, ok := r.URL.Query()["id"]
-	if ok && len(id[0]) < 1 {
+	if ok && len(id[0]) > 1 {
 		response.ID = s.mustParseInt(id[0])
 	}
+	fmt.Println("ID: ", response.ID)
 	return response
 }
 
@@ -75,9 +80,9 @@ func Make(st storage.Storage, c *config.Config) error {
 	s := http.NewServeMux()
 	s.HandleFunc("/v1/search", server.search)
 	s.Handle("/metrics", promhttp.Handler())
-	c.Logger.Infof("starting of the server...")
+	c.Logger.Infof("starting of the server at %s...", c.Address)
 	initPrometheus()
-	http.ListenAndServe(c.Address, nil)
+	http.ListenAndServe(c.Address, s)
 	graceful.Run(c.Address, 10*time.Second, s)
 	return nil
 }
