@@ -55,7 +55,10 @@ func (s *Server) prepareSearchRequest(r *http.Request) *storage.FindConfig {
 	if ok && len(id[0]) > 1 {
 		response.ID = s.mustParseInt(id[0])
 	}
-	fmt.Println("ID: ", response.ID)
+	mode, ok := r.URL.Query()["mode"]
+	if ok && len(mode[0]) > 1 {
+		response.ModeID = mode[0]
+	}
 	return response
 }
 

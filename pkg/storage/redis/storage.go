@@ -39,7 +39,7 @@ func (r *Redis) Insert(data []models.Parking) error {
 		return nil
 	}
 
-	modes := make(map[string][]int64)
+	modes := make(map[string][]interface{})
 
 	for _, d := range data {
 		if d.ID == 0 {
@@ -79,7 +79,8 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 		}
 	}
 	if req.ModeID != "" {
-
+		fmt.Println("SS: ", fmt.Sprintf("mode_%x", req.ModeID))
+		return findOneToMany(r.client, fmt.Sprintf("mode_%x", req.ModeID))
 	}
 
 	if req.ID != 0 {
@@ -89,7 +90,7 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get object")
 	}
-	return []models.Parking{*obj}, nil
+	return []models.Parking{obj}, nil
 }
 
 // findByKeys provides searching by additional indexes
@@ -97,27 +98,44 @@ func findByKeys(key string) (string, error) {
 	return "", nil
 }
 
+func findOneToMany(conn *redis.Client, key string) ([]models.Parking, error) {
+	members, err := conn.SMembers(key).Result()
+	if err != nil {
+		return nil, err
+	}
+	response := []models.Parking{}
+	for _, id := range members {
+		obj, err := getObject(conn, id)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to get object")
+		}
+		response = append(response, obj)
+	}
+	return response, nil
+}
+
 // createOneToMany provides creating one to many relationships
 // Its implemented by Sets
-func createOneToMany(conn *redis.Client, key string, data map[string][]int64) error {
+func createOneToMany(conn *redis.Client, key string, data map[string][]interface{}) error {
 	for k, v := range data {
-		if err := conn.SAdd(fmt.Sprintf("%s_%s", key, k), v).Err(); err != nil {
+		fmt.Println("M: ", fmt.Sprintf("%s_%s", key, k))
+		if err := conn.SAdd(fmt.Sprintf("%s_%s", key, "d0bad180d183d0b3d0bbd0bed181d183d182d0bed187d0bdd0be"), v...).Err(); err != nil {
 			return errors.Wrap(err, "unable to create data")
 		}
 	}
 	return nil
 }
 
-func getObject(conn *redis.Client, key string) (*models.Parking, error) {
+func getObject(conn *redis.Client, key string) (models.Parking, error) {
+	parking := models.Parking{}
 	objStr, err := conn.Do("GET", fmt.Sprintf("id_%s", key)).String()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to find by the key")
+		return parking, errors.Wrap(err, "unable to find by the key")
 	}
 	b := []byte(objStr)
-	parking := &models.Parking{}
-	err = json.Unmarshal(b, parking)
+	err = json.Unmarshal(b, &parking)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to find by the key")
+		return parking, errors.Wrap(err, "unable to find by the key")
 	}
 
 	return parking, nil
