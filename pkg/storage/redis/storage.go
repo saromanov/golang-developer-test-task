@@ -39,6 +39,7 @@ func (r *Redis) Insert(data []models.Parking) error {
 		return nil
 	}
 
+	indexes := [2]string{"mode_id_%d", "global_id_%d"}
 	for _, d := range data {
 		if d.ID == 0 {
 			return errNoID
@@ -53,6 +54,12 @@ func (r *Redis) Insert(data []models.Parking) error {
 		err = r.client.Do("SET", key, string(result)).Err()
 		if err != nil {
 			return fmt.Errorf("unable to set data: %v", err)
+		}
+
+		for _, idx := range indexes {
+			if err := createIndex(r.client, idx, key); err != nil {
+				return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
+			}
 		}
 	}
 	return nil
