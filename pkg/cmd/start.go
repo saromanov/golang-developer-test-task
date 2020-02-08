@@ -27,6 +27,11 @@ func Start(args []string) {
 				Value: "localhost:3000",
 				Usage: "address to web",
 			},
+			&cli.StringFlag{
+				Name:  "path-to-data",
+				Value: "./assets/data.json",
+				Usage: "path to loading of data",
+			},
 		},
 		Action: initialize,
 	}
@@ -49,7 +54,7 @@ func initialize(ctx *cli.Context) error {
 	if err != nil {
 		log.Fatalf("unable to init storage redis: %v", err)
 	}
-	d, err := data.Load("data.json")
+	d, err := data.Load(ctx.String("path-to-data"))
 	if err != nil {
 		log.Fatalf("unable to load data: %v", err)
 	}
