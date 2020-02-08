@@ -72,15 +72,15 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 		key string
 		err error
 	)
+	if req.ModeID != "" {
+		return findOneToMany(r.client, fmt.Sprintf("mode_%x", req.ModeID))
+	}
+
 	if req.GlobalID != 0 {
 		key, err = findByKeys(fmt.Sprintf("global_id_%d", req.GlobalID))
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to find by the key")
 		}
-	}
-	if req.ModeID != "" {
-		fmt.Println("SS: ", fmt.Sprintf("mode_%x", req.ModeID))
-		return findOneToMany(r.client, fmt.Sprintf("mode_%x", req.ModeID))
 	}
 
 	if req.ID != 0 {
@@ -98,6 +98,8 @@ func findByKeys(key string) (string, error) {
 	return "", nil
 }
 
+// findOneToMany provides searching of data by one to many relationships
+// "one-to-many" implemented by Sets
 func findOneToMany(conn *redis.Client, key string) ([]models.Parking, error) {
 	members, err := conn.SMembers(key).Result()
 	if err != nil {
