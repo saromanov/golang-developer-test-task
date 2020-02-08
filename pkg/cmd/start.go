@@ -23,6 +23,11 @@ func Start(args []string) {
 				Usage: "address to storage connection",
 			},
 			&cli.StringFlag{
+				Name:  "storage-password",
+				Value: "",
+				Usage: "storage password",
+			},
+			&cli.StringFlag{
 				Name:  "address",
 				Value: "localhost:3000",
 				Usage: "address to web",
@@ -49,12 +54,13 @@ func initialize(ctx *cli.Context) error {
 		Address:        ctx.String("address"),
 		Logger:         log,
 		StorageAddress: ctx.String("storage-address"),
+		StoragePassword: ctx.String("storage-password"),
 	}
 	storage, err := redis.New(c)
 	if err != nil {
 		log.Fatalf("unable to init storage redis: %v", err)
 	}
-	d, err := data.Load(ctx.String("path-to-data"))
+	d, err := data.LocalLoad(ctx.String("path-to-data"))
 	if err != nil {
 		log.Fatalf("unable to load data: %v", err)
 	}

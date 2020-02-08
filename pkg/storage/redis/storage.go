@@ -11,6 +11,7 @@ import (
 	"github.com/saromanov/golang-developer-test-task/pkg/storage"
 )
 
+// Redis provides implementation of the storage for redis
 type Redis struct {
 	client *redis.Client
 }
@@ -19,7 +20,7 @@ type Redis struct {
 func New(c *config.Config) (storage.Storage, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.StorageAddress,
-		Password: "",
+		Password: c.StoragePassword,
 		DB:       0,
 	})
 
@@ -28,6 +29,7 @@ func New(c *config.Config) (storage.Storage, error) {
 		return nil, errors.Wrap(err, "unable to ping redis")
 	}
 
+	initPrometheus()
 	return &Redis{
 		client: client,
 	}, nil

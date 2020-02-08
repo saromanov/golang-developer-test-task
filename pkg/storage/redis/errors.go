@@ -2,4 +2,4 @@ package redis
 
 import "errors"
 
-var errNoID = errors.New("id isnot defined")
+var errNoID = errors.New("id is not defined")

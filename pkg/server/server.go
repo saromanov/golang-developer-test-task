@@ -33,6 +33,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := s.store.Find(s.prepareSearchRequest(r))
 	if err != nil {
+		writeStatusCode(http.StatusInternalServerError, "GET")
 		failedRequests.Inc()
 		http.Error(w, fmt.Sprintf("unable to find data: %v", err), http.StatusInternalServerError)
 		return
@@ -41,9 +42,11 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	resp, err := json.Marshal(data)
 	if err != nil {
 		failedRequests.Inc()
+		writeStatusCode(http.StatusInternalServerError, "GET")
 		http.Error(w, fmt.Sprintf("unable to marshal data: %v", err), http.StatusInternalServerError)
 		return
 	}
+	writeStatusCode(http.StatusOK, "GET")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }

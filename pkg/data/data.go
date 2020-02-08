@@ -9,8 +9,8 @@ import (
 	"github.com/saromanov/golang-developer-test-task/pkg/models"
 )
 
-// Load provides loading of data
-func Load(path string) ([]models.Parking, error) {
+// LocalLoad provides loading of data by the path on storage
+func LocalLoad(path string) ([]models.Parking, error) {
 	d, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("unable to read data by the path: %s", path))
