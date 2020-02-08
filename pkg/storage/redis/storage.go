@@ -67,7 +67,40 @@ func (r *Redis) Insert(data []models.Parking) error {
 
 // Find provides searhing of the data
 func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
+	if req == nil {
+		return nil, nil
+	}
+	var (
+		key string
+		err error
+	)
+	if req.GlobalID != 0 {
+		key, err = findByKeys(fmt.Sprintf("global_id_%d", req.GlobalID))
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to find by the key")
+		}
+	}
 	return nil, nil
+}
+
+// findByKeys provides searching by additional indexes
+func findByKeys(key string) (string, error) {
+	return "", nil
+}
+
+func getObject(conn *redis.Client, key string) (*models.Parking, error) {
+	objStr, err := redis.String(conn.Do("GET", key))
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to find by the key")
+	}
+	b := []byte(objStr)
+	parking := &models.Parking{}
+	err = json.Unmarshal(b, parking)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to find by the key")
+	}
+
+	return parking, nil
 }
 
 // createIndex provides creating of the index for searching data
