@@ -39,6 +39,8 @@ func (r *Redis) Insert(data []models.Parking) error {
 		return nil
 	}
 
+	modes := make(map[string][]int64)
+
 	for _, d := range data {
 		if d.ID == 0 {
 			return errNoID
@@ -55,11 +57,10 @@ func (r *Redis) Insert(data []models.Parking) error {
 		if err := createIndex(r.client, fmt.Sprintf("global_id_%d", d.GlobalID), key); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
 		}
-		if err := createIndex(r.client, fmt.Sprintf("mode_id_%s", d.Mode), key); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
-		}
+		modes[d.Mode] = append(modes[d.Mode], d.ID)
 	}
-	return nil
+
+	return createOneToMany(r.client, "mode", modes)
 }
 
 // Find provides searhing of the data
@@ -77,11 +78,13 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 			return nil, errors.Wrap(err, "unable to find by the key")
 		}
 	}
+	if req.ModeID != "" {
+
+	}
 
 	if req.ID != 0 {
 		key = fmt.Sprintf("%d", req.ID)
 	}
-	fmt.Println("KEY: ", key)
 	obj, err := getObject(r.client, key)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get object")
@@ -92,6 +95,17 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 // findByKeys provides searching by additional indexes
 func findByKeys(key string) (string, error) {
 	return "", nil
+}
+
+// createOneToMany provides creating one to many relationships
+// Its implemented by Sets
+func createOneToMany(conn *redis.Client, key string, data map[string][]int64) error {
+	for k, v := range data {
+		if err := conn.SAdd(fmt.Sprintf("%s_%s", key, k), v).Err(); err != nil {
+			return errors.Wrap(err, "unable to create data")
+		}
+	}
+	return nil
 }
 
 func getObject(conn *redis.Client, key string) (*models.Parking, error) {
@@ -111,7 +125,6 @@ func getObject(conn *redis.Client, key string) (*models.Parking, error) {
 
 // createIndex provides creating of the index for searching data
 func createIndex(client *redis.Client, index, parentID string) error {
-	fmt.Println("ID: ", index)
 	if err := client.HSet(index, "field", parentID).Err(); err != nil {
 		return fmt.Errorf("unable to create index: %v", err)
 	}
