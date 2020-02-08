@@ -27,6 +27,10 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	totalRequests.Inc()
+	if len(r.URL.Query()) == 0 {
+		http.Error(w, "search parameters is not defined. Should be provides id, global_id or mode_id", http.StatusBadRequest)
+		return
+	}
 	data, err := s.store.Find(s.prepareSearchRequest(r))
 	if err != nil {
 		failedRequests.Inc()
