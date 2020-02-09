@@ -21,7 +21,7 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[32m%-11s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Build app binary file
-	$(DC_BIN) run $(DC_RUN_ARGS) go build -ldflags=$(LDFLAGS) -o './$(APP_NAME)' .
+	$(DC_BIN) run $(DC_RUN_ARGS) go build -ldflags=$(LDFLAGS) -o './cmd/$(APP_NAME)' .
 
 fmt: ## Run source code formatter tools
 	$(DC_BIN) run $(DC_RUN_ARGS) sh -c 'GO111MODULE=off go get golang.org/x/tools/cmd/goimports && $$GOPATH/bin/goimports -d -w .'
@@ -41,7 +41,7 @@ cover: ## Run app tests with coverage report
 	-sensible-browser ./coverage.html && sleep 2 && rm -f ./coverage.html
 
 run: ## Run app without building binary file
-	$(DC_BIN) run $(DC_RUN_ARGS) go run . $(GO_RUN_ARGS)
+	$(DC_BIN) run $(DC_RUN_ARGS) go run ./cmd/. $(GO_RUN_ARGS)
 
 shell: ## Start shell into container with golang
 	$(DC_BIN) run $(DC_RUN_ARGS) bash

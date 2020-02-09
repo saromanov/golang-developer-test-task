@@ -14,7 +14,8 @@ var totalWrites = prometheus.NewCounter(
 		Name: "failed_writes",
 	})
 
-func initPrometheus() {
+// InitPrometheus provides initialization of prometheus metrics
+func InitPrometheus() {
 	prometheus.MustRegister(totalReads)
 	prometheus.MustRegister(totalWrites)
 }

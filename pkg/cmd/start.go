@@ -51,20 +51,21 @@ func Start(args []string) {
 func initialize(ctx *cli.Context) error {
 	log := logger.New()
 	c := &config.Config{
-		Address:        ctx.String("address"),
-		Logger:         log,
-		StorageAddress: ctx.String("storage-address"),
+		Address:         ctx.String("address"),
+		Logger:          log,
+		StorageAddress:  ctx.String("storage-address"),
 		StoragePassword: ctx.String("storage-password"),
 	}
-	storage, err := redis.New(c)
+	storage, err := redis.New(c, nil)
 	if err != nil {
 		log.Fatalf("unable to init storage redis: %v", err)
 	}
+	redis.InitPrometheus()
 	d, err := data.LocalLoad(ctx.String("path-to-data"))
 	if err != nil {
 		log.Fatalf("unable to load data: %v", err)
 	}
-	if err := storage.Insert(d); err != nil {
+	if _, err := storage.Insert(d); err != nil {
 		log.Fatalf("unable to save data to the storage: %v", err)
 	}
 	if err := server.Make(storage, c); err != nil {

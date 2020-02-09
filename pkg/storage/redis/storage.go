@@ -31,7 +31,6 @@ func New(c *config.Config, client *redis.Client) (storage.Storage, error) {
 		return nil, errors.Wrap(err, "unable to ping redis")
 	}
 
-	initPrometheus()
 	return &Redis{
 		client: client,
 	}, nil
