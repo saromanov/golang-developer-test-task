@@ -19,7 +19,7 @@ func Start(args []string) {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "storage-address",
-				Value: "localhost:6379",
+				Value: "redis:6379",
 				Usage: "address to storage connection",
 			},
 			&cli.StringFlag{

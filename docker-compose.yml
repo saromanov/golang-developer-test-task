@@ -6,8 +6,12 @@ volumes:
 
 services:
   app:
-    image: golang:1.13-stretch # Image page: <https://hub.docker.com/_/golang>
+    image: golang:1.13-stretch
     working_dir: /src
+    command: ./golang-developer-test-task
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
     environment:
       HOME: /tmp
       GOPATH: /tmp
@@ -18,11 +22,16 @@ services:
       - tmp-data:/tmp:cached
     depends_on:
       - redis
+    networks:
+      - test_app
 
   redis:
     image: redis:5.0.7-alpine
+    restart: unless-stopped
     volumes:
       - redis-data:/data:cached
-    ports:
-      - 6379
-      - '6379:6379'
+    networks:
+      - test_app
+
+networks:
+  test_app:
