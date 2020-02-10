@@ -11,36 +11,36 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var app = &cli.App{
+	Name:  "golang-developer-test-task",
+	Usage: "create puppet for the project",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "storage-address",
+			Value: "redis:6379",
+			Usage: "address to storage connection",
+		},
+		&cli.StringFlag{
+			Name:  "storage-password",
+			Value: "",
+			Usage: "storage password",
+		},
+		&cli.StringFlag{
+			Name:  "address",
+			Value: ":3000",
+			Usage: "address to web",
+		},
+		&cli.StringFlag{
+			Name:  "path-to-data",
+			Value: "./assets/data.json",
+			Usage: "path to loading of data",
+		},
+	},
+	Action: initialize,
+}
+
 // Start provides starting of the app
 func Start(args []string) {
-	app := &cli.App{
-		Name:  "golang-developer-test-task",
-		Usage: "create puppet for the project",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "storage-address",
-				Value: "redis:6379",
-				Usage: "address to storage connection",
-			},
-			&cli.StringFlag{
-				Name:  "storage-password",
-				Value: "",
-				Usage: "storage password",
-			},
-			&cli.StringFlag{
-				Name:  "address",
-				Value: ":3000",
-				Usage: "address to web",
-			},
-			&cli.StringFlag{
-				Name:  "path-to-data",
-				Value: "./assets/data.json",
-				Usage: "path to loading of data",
-			},
-		},
-		Action: initialize,
-	}
-
 	err := app.Run(os.Args)
 	if err != nil {
 		return

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"os"
 	"github.com/saromanov/golang-developer-test-task/pkg/cmd"
+	"os"
 )
+
 func main() {
 	cmd.Start(os.Args)
 }

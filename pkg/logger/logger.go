@@ -11,6 +11,7 @@ type Logger struct {
 	log *logrus.Logger
 }
 
+// New provides initialization of the logger
 func New() *Logger {
 	log := logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{
@@ -23,14 +24,17 @@ func New() *Logger {
 	}
 }
 
+// Fatalf for fatal errors
 func (l *Logger) Fatalf(format string, data ...interface{}) {
 	l.log.Fatalf(format, data...)
 }
 
+// Infof for info errors
 func (l *Logger) Infof(format string, data ...interface{}) {
 	l.log.Infof(format, data...)
 }
 
+// Errorf for errors with "Error" level
 func (l *Logger) Errorf(format string, data ...interface{}) {
 	l.log.Errorf(format, data...)
 }
