@@ -86,7 +86,7 @@ jobs:
       - name: Build application
         env:
           GOOS: ${{ matrix.os }}
-        run: go build -ldflags="-s -w" -o /tmp/app .
+        run: go build -ldflags="-s -w" -o /tmp/app ./cmd/.
 
       - uses: actions/upload-artifact@master
         with:

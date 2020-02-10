@@ -75,7 +75,7 @@ func initialize(ctx *cli.Context) error {
 }
 
 // makeConfig provides construction of the config data
-// from input
+// from input. Its supports flags or environment variables
 func makeConfig(ctx *cli.Context) *config.Config {
 	c := &config.Config{}
 	address := os.Getenv("ADDRESS")

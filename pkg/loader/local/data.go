@@ -15,7 +15,7 @@ type Local struct {
 	path string
 }
 
-// New provides initialization of the local storage
+// New provides initialization of the local loader
 func New(path string) (loader.Loader, error) {
 	if path == "" {
 		return nil, fmt.Errorf("path is not defined")
@@ -25,7 +25,7 @@ func New(path string) (loader.Loader, error) {
 	}, nil
 }
 
-// Load provides loading of data by the path on storage
+// Load provides loading of data by the path on loader
 func (l *Local) Load() ([]models.Parking, error) {
 	d, err := ioutil.ReadFile(l.path)
 	if err != nil {

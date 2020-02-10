@@ -26,7 +26,7 @@ var statusCodes = prometheus.NewCounterVec(
 
 var responseTime = prometheus.NewHistogram(
 	prometheus.HistogramOpts{
-		Name:    "http_reponse_time",
+		Name:    "http_response_time",
 		Help:    "Response time of HTTP requests",
 		Buckets: prometheus.LinearBuckets(20, 5, 10),
 	},
