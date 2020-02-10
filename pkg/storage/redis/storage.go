@@ -36,7 +36,7 @@ func New(c *config.Config, client *redis.Client) (storage.Storage, error) {
 	}, nil
 }
 
-// Insert provides inserting of list of the data
+// Insert provides inserting of slisw with parking data
 func (r *Redis) Insert(data []models.Parking) (int, error) {
 	if len(data) == 0 {
 		return 0, nil
@@ -50,16 +50,16 @@ func (r *Redis) Insert(data []models.Parking) (int, error) {
 		key := fmt.Sprintf("id_%d", d.ID)
 		result, err := json.Marshal(d)
 		if err != nil {
-			return 0, fmt.Errorf("unable to marshal data: %v", err)
+			return 0, fmt.Errorf("unable to marshal data with id %v: %v", d.ID, err)
 		}
 		err = r.client.Do("SET", key, string(result)).Err()
 		if err != nil {
 			return 0, fmt.Errorf("unable to set data: %v", err)
 		}
-		if err := createIndex(r.client, fmt.Sprintf("global_id_%d", d.GlobalID), key); err != nil {
+		if err := createIndex(r.client, fmt.Sprintf("global_id_%d", d.GlobalID), fmt.Sprintf("%d", d.ID)); err != nil {
 			return 0, errors.Wrap(err, fmt.Sprintf("unable to create index: %v", err))
 		}
-		modes[d.Mode] = append(modes[d.Mode], d.ID)
+		modes[getMD5Hash(d.Mode)] = append(modes[getMD5Hash(d.Mode)], d.ID)
 	}
 
 	return len(data), createOneToMany(r.client, "mode", modes)
@@ -75,11 +75,11 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 		err error
 	)
 	if req.ModeID != "" {
-		return findOneToMany(r.client, fmt.Sprintf("mode_%x", req.ModeID))
+		return findOneToMany(r.client, fmt.Sprintf("mode_%s", getMD5Hash(req.ModeID)))
 	}
 
 	if req.GlobalID != 0 {
-		key, err = findByKeys(fmt.Sprintf("global_id_%d", req.GlobalID))
+		key, err = findByKeys(r.client, fmt.Sprintf("global_id_%d", req.GlobalID))
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to find by the key")
 		}
@@ -96,8 +96,12 @@ func (r *Redis) Find(req *storage.FindConfig) ([]models.Parking, error) {
 }
 
 // findByKeys provides searching by additional indexes
-func findByKeys(key string) (string, error) {
-	return "", nil
+func findByKeys(conn *redis.Client, key string) (string, error) {
+	data, err := conn.HGet(key, "field").Result()
+	if err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("unable to get key %s", key))
+	}
+	return data, nil
 }
 
 // findOneToMany provides searching of data by one to many relationships
@@ -122,11 +126,19 @@ func findOneToMany(conn *redis.Client, key string) ([]models.Parking, error) {
 // Its implemented by Sets
 func createOneToMany(conn *redis.Client, key string, data map[string][]interface{}) error {
 	for k, v := range data {
-		fmt.Println("M: ", fmt.Sprintf("%s_%s", key, k))
-		if err := conn.SAdd(fmt.Sprintf("%s_%s", key, "d0bad180d183d0b3d0bbd0bed181d183d182d0bed187d0bdd0be"), v...).Err(); err != nil {
+		if err := conn.SAdd(fmt.Sprintf("%s_%s", key, k), v...).Err(); err != nil {
 			return errors.Wrap(err, "unable to create data")
 		}
 	}
+	return nil
+}
+
+// createIndex provides creating of the index for searching data
+func createIndex(client *redis.Client, index, parentID string) error {
+	if err := client.HSet(index, "field", parentID).Err(); err != nil {
+		return fmt.Errorf("unable to create index: %v", err)
+	}
+
 	return nil
 }
 
@@ -143,13 +155,4 @@ func getObject(conn *redis.Client, key string) (models.Parking, error) {
 	}
 
 	return parking, nil
-}
-
-// createIndex provides creating of the index for searching data
-func createIndex(client *redis.Client, index, parentID string) error {
-	if err := client.HSet(index, "field", parentID).Err(); err != nil {
-		return fmt.Errorf("unable to create index: %v", err)
-	}
-
-	return nil
 }

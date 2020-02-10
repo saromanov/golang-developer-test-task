@@ -12,8 +12,13 @@ import (
 )
 
 type testFind struct {
-	Input   []models.Parking
-	Request *storage.FindConfig
+	Input         []models.Parking
+	Request       *storage.FindConfig
+	ErrorMessage  string
+	GlobalID      int64
+	ID            int64
+	Mode          string
+	ResponseCount int
 }
 
 func newTestRedis() storage.Storage {
@@ -33,13 +38,16 @@ func newTestRedis() storage.Storage {
 	return client
 }
 
-func checkParkingStructFind(t *testing.T, r storage.Storage, req *storage.FindConfig) {
-	data, err := r.Find(req)
+func checkParkingStructFind(t *testing.T, r storage.Storage, tf testFind) {
+	data, err := r.Find(tf.Request)
 	assert.NoError(t, err)
-	assert.Equal(t, len(data), 1)
-	assert.Equal(t, data[0].ID, int64(1))
-	assert.Equal(t, data[0].Mode, "test")
-	assert.Equal(t, data[0].GlobalID, int64(1))
+	assert.Equal(t, len(data), tf.ResponseCount, tf.ErrorMessage)
+	if len(tf.Input) == 0 {
+		return
+	}
+	assert.Equal(t, data[0].ID, int64(tf.ID), tf.ErrorMessage)
+	assert.Equal(t, data[0].Mode, tf.Mode, tf.ErrorMessage)
+	assert.Equal(t, data[0].GlobalID, int64(tf.GlobalID), tf.ErrorMessage)
 }
 
 func TestInsertParkingData(t *testing.T) {
@@ -81,6 +89,11 @@ func TestFindParkingData(t *testing.T) {
 		Request: &storage.FindConfig{
 			ID: 1,
 		},
+		ErrorMessage:  "Unable to find by ID",
+		ID:            1,
+		Mode:          "test",
+		GlobalID:      1,
+		ResponseCount: 1,
 	},
 
 		testFind{
@@ -92,6 +105,11 @@ func TestFindParkingData(t *testing.T) {
 			Request: &storage.FindConfig{
 				GlobalID: 1,
 			},
+			ErrorMessage:  "Unable to find by GlobalID",
+			ID:            1,
+			Mode:          "test",
+			GlobalID:      1,
+			ResponseCount: 1,
 		},
 
 		testFind{
@@ -103,6 +121,63 @@ func TestFindParkingData(t *testing.T) {
 			Request: &storage.FindConfig{
 				ModeID: "test",
 			},
+			ErrorMessage:  "Unable to find by ModeID",
+			ID:            1,
+			Mode:          "test",
+			GlobalID:      1,
+			ResponseCount: 1,
+		},
+
+		testFind{
+			Input: []models.Parking{models.Parking{
+				ID:       1,
+				Mode:     "test",
+				GlobalID: 1,
+			},
+				models.Parking{
+					ID:       2,
+					Mode:     "test2",
+					GlobalID: 2,
+				},
+				models.Parking{
+					ID:       3,
+					Mode:     "test3",
+					GlobalID: 4,
+				}},
+			Request: &storage.FindConfig{
+				GlobalID: 4,
+			},
+			ErrorMessage:  "Unable to find by GlobalID",
+			ID:            3,
+			Mode:          "test3",
+			GlobalID:      4,
+			ResponseCount: 1,
+		},
+
+		testFind{
+			Input: []models.Parking{models.Parking{
+				ID:       1,
+				Mode:     "foo",
+				GlobalID: 1,
+			},
+				models.Parking{
+					ID:       2,
+					Mode:     "foo",
+					GlobalID: 2,
+				},
+				models.Parking{
+					ID:       3,
+					Mode:     "foo",
+					GlobalID: 4,
+				}},
+			Request: &storage.FindConfig{
+				ModeID: "foo",
+			},
+			ErrorMessage:  "Unable to find many by ModeID",
+			ID:            1,
+			Mode:          "foo",
+			GlobalID:      1,
+			ResponseCount: 3,
 		},
 	}
 
@@ -110,6 +185,6 @@ func TestFindParkingData(t *testing.T) {
 		count, err := r.Insert(d.Input)
 		assert.NoError(t, err)
 		assert.Equal(t, count, len(d.Input))
-		checkParkingStructFind(t, r, d.Request)
+		checkParkingStructFind(t, r, d)
 	}
 }

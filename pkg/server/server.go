@@ -87,12 +87,23 @@ func Make(st storage.Storage, c *config.Config) error {
 		store:  st,
 		logger: c.Logger,
 	}
+
 	s := http.NewServeMux()
 	s.HandleFunc("/v1/search", server.search)
 	s.Handle("/metrics", promhttp.Handler())
-	c.Logger.Infof("starting of the server at %s...", c.Address)
+	c.Logger.Infof("starting of the server at twiwww %s...", c.Address)
+
+	srv := &http.Server{
+		Handler:      s,
+		Addr:         c.Address,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
 	initPrometheus()
-	http.ListenAndServe(c.Address, s)
+	if err := srv.ListenAndServe(); err != nil {
+		return err
+	}
 	graceful.Run(c.Address, 10*time.Second, s)
 	return nil
 }

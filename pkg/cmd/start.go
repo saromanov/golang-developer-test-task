@@ -29,7 +29,7 @@ func Start(args []string) {
 			},
 			&cli.StringFlag{
 				Name:  "address",
-				Value: "localhost:3000",
+				Value: ":3000",
 				Usage: "address to web",
 			},
 			&cli.StringFlag{
