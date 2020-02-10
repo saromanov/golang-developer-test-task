@@ -50,12 +50,8 @@ func Start(args []string) {
 // initialize provides initialization of the app
 func initialize(ctx *cli.Context) error {
 	log := logger.New()
-	c := &config.Config{
-		Address:         ctx.String("address"),
-		Logger:          log,
-		StorageAddress:  ctx.String("storage-address"),
-		StoragePassword: ctx.String("storage-password"),
-	}
+	c := makeConfig(ctx)
+	c.Logger = log
 	storage, err := redis.New(c, nil)
 	if err != nil {
 		log.Fatalf("unable to init storage redis: %v", err)
@@ -72,4 +68,30 @@ func initialize(ctx *cli.Context) error {
 		log.Fatalf("failed to start server: %v", err)
 	}
 	return nil
+}
+
+// makeConfig provides construction of the config data
+// from input
+func makeConfig(ctx *cli.Context) *config.Config {
+	c := &config.Config{}
+	address := os.Getenv("ADDRESS")
+	if address != "" {
+		c.Address = address
+	} else {
+		c.Address = ctx.String("address")
+	}
+	storageAddress := os.Getenv("STORAGE_ADDRESS")
+	if storageAddress != "" {
+		c.StorageAddress = storageAddress
+	} else {
+		c.StorageAddress = ctx.String("storage-address")
+	}
+	storagePassword := os.Getenv("STORAGE_PASSWORD")
+	if storagePassword != "" {
+		c.StoragePassword = storagePassword
+	} else {
+		c.StoragePassword = ctx.String("address-password")
+	}
+
+	return c
 }

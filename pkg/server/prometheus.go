@@ -23,7 +23,7 @@ var statusCodes = prometheus.NewCounterVec(
 	[]string{"code", "method"},
 )
 
-func writeStatusCode(code int, method string ){
+func writeStatusCode(code int, method string) {
 	statusCodes.WithLabelValues(fmt.Sprintf("%d", code), method).Inc()
 }
 func initPrometheus() {
