@@ -6,7 +6,9 @@ volumes:
 
 services:
   app:
-    image: golang:1.13-stretch
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /src
     command: ./golang-developer-test-task
     ports:
@@ -20,10 +22,10 @@ services:
       - /etc/group:/etc/group:ro
       - .:/src:cached
       - tmp-data:/tmp:cached
-    depends_on:
-      - redis
     networks:
       - test_app
+    depends_on:
+      - redis
 
   redis:
     image: redis:5.0.7-alpine
@@ -33,5 +35,7 @@ services:
     networks:
       - test_app
 
+
 networks:
   test_app:
+
