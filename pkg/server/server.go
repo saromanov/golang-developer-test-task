@@ -48,7 +48,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	writeStatusCode(http.StatusOK, "GET")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	w.Write(resp) //nolint
 }
 
 // mustParseInt always returns number from request

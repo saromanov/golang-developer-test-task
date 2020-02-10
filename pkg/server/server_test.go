@@ -90,10 +90,13 @@ func TestSearchEndpoint(t *testing.T) {
 	}
 	insertToStorage(t, st)
 	addr := "http://127.0.0.1:8083"
-	go Make(st, &config.Config{
-		Address: ":8083",
-		Logger:  logger.New(),
-	})
+	go func() {
+		err := Make(st, &config.Config{
+			Address: ":8083",
+			Logger:  logger.New(),
+		})
+		assert.NoError(t, err)
+	}()
 	time.Sleep(1 * time.Second)
 	response, err := http.Post(fmt.Sprintf("%s/v1/search", addr), "application/json", nil)
 	assert.NoError(t, err)
