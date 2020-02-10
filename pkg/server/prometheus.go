@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -23,6 +24,14 @@ var statusCodes = prometheus.NewCounterVec(
 	[]string{"code", "method"},
 )
 
+var responseTime = prometheus.NewHistogram(
+	prometheus.HistogramOpts{
+		Name:    "http_reponse_time",
+		Help:    "Response time of HTTP requests",
+		Buckets: prometheus.LinearBuckets(20, 5, 10),
+	},
+)
+
 func writeStatusCode(code int, method string) {
 	statusCodes.WithLabelValues(fmt.Sprintf("%d", code), method).Inc()
 }
@@ -30,4 +39,5 @@ func initPrometheus() {
 	prometheus.MustRegister(totalRequests)
 	prometheus.MustRegister(failedRequests)
 	prometheus.MustRegister(statusCodes)
+	prometheus.MustRegister(responseTime)
 }

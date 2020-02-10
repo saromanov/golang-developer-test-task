@@ -22,6 +22,12 @@ type Server struct {
 
 // search provides searching by the data
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func(){
+		finishTime := time.Since(startTime)
+		responseTime.Observe(float64(finishTime.Milliseconds()))
+
+	}()
 	if r.Method != "GET" {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return

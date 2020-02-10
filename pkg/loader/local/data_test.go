@@ -7,7 +7,9 @@ import (
 )
 
 func TestLoadData(t *testing.T) {
-	data, err := LocalLoad("../assets/data.json")
+	l, err := New("../../../assets/data.json")
+	assert.NoError(t, err)
+	data, err := l.Load()
 	assert.NoError(t, err)
 	assert.NotEqual(t, len(data), 0)
 }
