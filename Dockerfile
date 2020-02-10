@@ -6,5 +6,4 @@ RUN go build -ldflags="-s -w" -o /tmp/app ./cmd/.
 
 FROM alpine:latest
 COPY --from=builder /tmp/app /bin/app
-EXPOSE 3000
 ENTRYPOINT ["/bin/app"]
