@@ -4,9 +4,7 @@
 
 # Тестовое задание для GoLang-разработчика
 
-![Project language][badge_language]
-[![Build Status][badge_build]][link_build]
-[![Do something awesome][badge_use_template]][use_this_repo_template]
+[![Go Report Card](https://goreportcard.com/badge/github.com/saromanov/golang-developer-test-task)](https://goreportcard.com/report/github.com/saromanov/golang-developer-test-task)
 
 # Описание структуры проекта
 [cmd](https://github.com/saromanov/golang-developer-test-task/tree/master/cmd)
@@ -44,7 +42,7 @@ docker-compose up --build
 
 # Использование
 
-Для поиска по парковкам нужно использовать конечную точку `/v1/search`.
+Для поиска по парковкам нужно использовать конечную точку `/v1/search`. По умолчанию, на адрес `localhost:3000`
 Например запрос
 ```
 http://localhost:3000/v1/search?id=122
