@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/saromanov/golang-developer-test-task/pkg/config"
-	"github.com/saromanov/golang-developer-test-task/pkg/data"
+	"github.com/saromanov/golang-developer-test-task/pkg/loader/local"
 	"github.com/saromanov/golang-developer-test-task/pkg/logger"
 	"github.com/saromanov/golang-developer-test-task/pkg/server"
 	"github.com/saromanov/golang-developer-test-task/pkg/storage/redis"
@@ -57,7 +57,11 @@ func initialize(ctx *cli.Context) error {
 		log.Fatalf("unable to init storage redis: %v", err)
 	}
 	redis.InitPrometheus()
-	d, err := data.LocalLoad(ctx.String("path-to-data"))
+	dLocal, err := local.New(ctx.String("path-to-data"))
+	if err != nil {
+		log.Fatalf("unable to load data: %v", err)
+	}
+	d, err := dLocal.Load()
 	if err != nil {
 		log.Fatalf("unable to load data: %v", err)
 	}
