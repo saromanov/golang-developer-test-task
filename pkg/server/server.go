@@ -51,24 +51,6 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// prepareSearchRequest creates request for find on storage
-func (s *Server) prepareSearchRequest(r *http.Request) *storage.FindConfig {
-	response := &storage.FindConfig{}
-	globalID, ok := r.URL.Query()["global_id"]
-	if ok && len(globalID[0]) > 1 {
-		response.GlobalID = s.mustParseInt(globalID[0])
-	}
-	id, ok := r.URL.Query()["id"]
-	if ok && len(id[0]) > 1 {
-		response.ID = s.mustParseInt(id[0])
-	}
-	mode, ok := r.URL.Query()["mode"]
-	if ok && len(mode[0]) > 1 {
-		response.ModeID = mode[0]
-	}
-	return response
-}
-
 // mustParseInt always returns number from request
 // but if its contains errors, its logging
 func (s *Server) mustParseInt(d string) int64 {
@@ -81,8 +63,8 @@ func (s *Server) mustParseInt(d string) int64 {
 
 }
 
-// Make provides starting of the server
-func Make(st storage.Storage, c *config.Config) error {
+// makeServer provides create of the new server
+func makeServer(st storage.Storage, c *config.Config) (*http.ServeMux, *http.Server) {
 	server := &Server{
 		store:  st,
 		logger: c.Logger,
@@ -91,7 +73,8 @@ func Make(st storage.Storage, c *config.Config) error {
 	s := http.NewServeMux()
 	s.HandleFunc("/v1/search", server.search)
 	s.Handle("/metrics", promhttp.Handler())
-	c.Logger.Infof("starting of the server at twiwww %s...", c.Address)
+	s.Handle("/favicon.ico", http.NotFoundHandler())
+	c.Logger.Infof("starting of the server at %s...", c.Address)
 
 	srv := &http.Server{
 		Handler:      s,
@@ -99,7 +82,12 @@ func Make(st storage.Storage, c *config.Config) error {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
+	return s, srv
+}
 
+// Make provides starting of the server
+func Make(st storage.Storage, c *config.Config) error {
+	s, srv := makeServer(st, c)
 	initPrometheus()
 	if err := srv.ListenAndServe(); err != nil {
 		return err
